@@ -1,4 +1,4 @@
-module github.com/wildberries-L2/getTimeModule
+module github.com/merkulovlad/wildberries-L2/get_time_module
 
 go 1.24.6
 
