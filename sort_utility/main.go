@@ -12,6 +12,8 @@ import (
 func main() {
 	opts := internal.ParseFlags()
 
+	exists := make(map[string]bool)
+	
 	files := pflag.Args()
 	records := make([]*internal.Record, 0, 500)
 
@@ -47,17 +49,24 @@ func main() {
 
 	if opts.CheckOnly {
 		if internal.CheckIsSorted(records, opts) {
-			fmt.Println("The input is sorted.")
 			os.Exit(0)
-		} else {
-			fmt.Println("The input is not sorted.")
-			os.Exit(1)
 		}
+		fmt.Fprintln(os.Stderr, "input is not sorted")
+		os.Exit(1)
 	} else {
 		internal.SortRecords(records, opts)
 
 		for _, record := range records {
-			fmt.Println(record.OriginalLine)
+			if opts.Unique {
+				key := record.TrimmedKey
+				if exists[key] {
+					continue
+				}
+				exists[key] = true
+				fmt.Println(record.OriginalLine)
+			} else {		
+				fmt.Println(record.OriginalLine)
+			}
 		}
 	}
 }
