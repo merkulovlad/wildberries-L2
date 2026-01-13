@@ -17,18 +17,20 @@ func main() {
 
 // parseFlags parses command-line arguments and returns Options
 func parseFlags() Options {
-	var opts Options
+	var Fields string
+	var Delimiter string
+	var Separated bool
 
 	// TODO: Parse -f flag for field specification
-	flag.StringVar(&opts.Fields, "f", "", "")
+	flag.StringVar(&Fields, "f", "", "Comma-separated list of fields or ranges (e.g. 1,3-5)")
 
 	// TODO: Parse -d flag for delimiter
-	flag.StringVar(&opts.Delimiter, "d", "\t", "")
+	flag.StringVar(&Delimiter, "d", "\t", "")
 
 	// TODO: Parse -s flag for separated mode
-	flag.BoolVar(&opts.Separated, "s", false, "")
+	flag.BoolVar(&Separated, "s", false, "Suppress lines without delimiter")
 
 	flag.Parse()
 
-	return opts
+	return NewOptions(Fields, Delimiter, Separated)
 }

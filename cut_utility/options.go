@@ -6,3 +6,11 @@ type Options struct {
 	Delimiter string // Field delimiter (default: tab)
 	Separated bool   // Output only lines containing delimiter
 }
+
+func NewOptions(fields, delimiter string, separated bool) Options {
+	return Options{
+		Fields:    fields,
+		Delimiter: delimiter,
+		Separated: separated,
+	}
+}

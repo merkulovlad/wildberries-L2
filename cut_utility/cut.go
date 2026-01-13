@@ -33,6 +33,9 @@ func cut(r io.Reader, w io.Writer, opts Options) error {
 		}
 	}
 
-	// TODO: Handle scanner errors
-	return scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
 }
