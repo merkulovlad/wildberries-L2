@@ -1,4 +1,4 @@
-package main
+package internal
 
 // Options contains configuration for the cut utility
 type Options struct {

@@ -4,21 +4,25 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/merkulovlad/wildberries-L2/cut_utility/internal"
 )
 
 func main() {
 	opts := parseFlags()
 
-	if err := cut(os.Stdin, os.Stdout, opts); err != nil {
+	if err := internal.Cut(os.Stdin, os.Stdout, opts); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }
 
 // parseFlags parses command-line arguments and returns Options
-func parseFlags() Options {
+func parseFlags() internal.Options {
 	var Fields string
+
 	var Delimiter string
+
 	var Separated bool
 
 	// TODO: Parse -f flag for field specification
@@ -32,5 +36,5 @@ func parseFlags() Options {
 
 	flag.Parse()
 
-	return NewOptions(Fields, Delimiter, Separated)
+	return internal.NewOptions(Fields, Delimiter, Separated)
 }

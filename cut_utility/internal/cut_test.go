@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"bytes"
@@ -20,17 +20,17 @@ func TestCutSingleField(t *testing.T) {
 		Separated: false,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
-// TestCutMultipleFields tests extracting multiple non-consecutive fields
+// TestCutMultipleFields tests extracting multiple non-conseCutive fields
 func TestCutMultipleFields(t *testing.T) {
 	input := "a\tb\tc\td\te\n"
 	expected := "a\tc\te\n"
@@ -44,13 +44,13 @@ func TestCutMultipleFields(t *testing.T) {
 		Separated: false,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
@@ -68,13 +68,13 @@ func TestCutFieldRanges(t *testing.T) {
 		Separated: false,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
@@ -92,13 +92,13 @@ func TestCutCombinedFieldSpec(t *testing.T) {
 		Separated: false,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
@@ -116,13 +116,13 @@ func TestCutCustomDelimiter(t *testing.T) {
 		Separated: false,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
@@ -140,13 +140,13 @@ func TestCutSeparatedFlag(t *testing.T) {
 		Separated: true,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
@@ -164,13 +164,13 @@ func TestCutFieldsExceedColumns(t *testing.T) {
 		Separated: false,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
@@ -188,13 +188,13 @@ func TestCutEmptyInput(t *testing.T) {
 		Separated: false,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
@@ -212,13 +212,13 @@ func TestCutDefaultDelimiter(t *testing.T) {
 		Separated: false,
 	}
 
-	err := cut(reader, writer, opts)
+	err := Cut(reader, writer, opts)
 	if err != nil {
-		t.Fatalf("cut() error = %v", err)
+		t.Fatalf("Cut() error = %v", err)
 	}
 
 	if writer.String() != expected {
-		t.Errorf("cut() = %q, want %q", writer.String(), expected)
+		t.Errorf("Cut() = %q, want %q", writer.String(), expected)
 	}
 }
 
@@ -246,6 +246,7 @@ func TestParseFields(t *testing.T) {
 				t.Errorf("parseFields() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !tt.wantErr && !equalSlices(got, tt.expected) {
 				t.Errorf("parseFields() = %v, want %v", got, tt.expected)
 			}
@@ -331,10 +332,12 @@ func equalSlices[T comparable](a, b []T) bool {
 	if len(a) != len(b) {
 		return false
 	}
+
 	for i := range a {
 		if a[i] != b[i] {
 			return false
 		}
 	}
+
 	return true
 }

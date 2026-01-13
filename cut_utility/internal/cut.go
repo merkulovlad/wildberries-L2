@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"bufio"
@@ -7,9 +7,8 @@ import (
 )
 
 // cut reads from r, processes lines according to opts, and writes to w
-func cut(r io.Reader, w io.Writer, opts Options) error {
+func Cut(r io.Reader, w io.Writer, opts Options) error {
 	// TODO: Validate options
-
 	// TODO: Parse field specification into usable format
 	fields, err := parseFields(opts.Fields)
 	if err != nil {
