@@ -1,35 +1,39 @@
 package executor
 
 import (
-	"io"
+	"os"
 
 	"github.com/merkulovlad/wildberries-L2/shell_unix/internal/parser"
 )
 
-type RedirectExecutor struct {
-	redirect *parser.Redirect
-}
+// executeRedirect executes a command with input/output redirection
+func (e *Executor) executeRedirect(redir *parser.Redirect) error {
+	if redir == nil || redir.Node == nil {
+		return nil
+	}
 
-// NewRedirectExecutor creates a new redirect executor
-func NewRedirectExecutor(redirect *parser.Redirect) *RedirectExecutor {
-	return &RedirectExecutor{}
-}
+	switch redir.Type {
+	case parser.RedirectInput:
+		file, err := os.Open(redir.Target)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
 
-// Execute performs the redirection and executes the command
-func (r *RedirectExecutor) Execute() error {
-	return nil
-}
+		child := e.withIO(file, e.stdout, e.stderr)
+		return child.Execute(redir.Node)
 
-// setupInput redirects stdin from the specified file
-func (r *RedirectExecutor) setupInput(target string) (io.ReadCloser, error) {
-	return nil, nil
-}
+	case parser.RedirectOutput:
+		file, err := os.Create(redir.Target)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
 
-// setupOutput redirects stdout to the specified file
-func (r *RedirectExecutor) setupOutput(target string) (io.WriteCloser, error) {
-	return nil, nil
-}
+		child := e.withIO(e.stdin, file, e.stderr)
+		return child.Execute(redir.Node)
 
-// restore restores original stdin/stdout after redirection
-func (r *RedirectExecutor) restore() {
+	default:
+		return ErrUnknownType
+	}
 }

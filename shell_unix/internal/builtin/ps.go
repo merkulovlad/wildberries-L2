@@ -1,5 +1,10 @@
 package builtin
 
+import (
+	"io"
+	"os/exec"
+)
+
 type PS struct {
 }
 
@@ -9,6 +14,10 @@ func NewPS() *PS {
 }
 
 // Execute lists all running processes
-func (p *PS) Execute(args []string) error {
-	return nil
+func (p *PS) Execute(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
+	cmd := exec.Command("ps")
+	cmd.Stdin = stdin
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	return cmd.Run()
 }

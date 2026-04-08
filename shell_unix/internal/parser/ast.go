@@ -12,10 +12,11 @@ type Command struct {
 func (c *Command) node() {}
 
 type Pipeline struct {
-	Commands []*Command
+	Commands []Node
 }
 
 func (p *Pipeline) node() {}
+
 
 type Redirect struct {
 	Type   RedirectType

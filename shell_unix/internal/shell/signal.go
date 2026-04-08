@@ -2,26 +2,30 @@ package shell
 
 import (
 	"os"
+	"os/signal"
 )
 
 type SignalHandler struct {
 	signals chan os.Signal
 }
 
-// NewSignalHandler creates a new signal handler for managing OS signals
+// NewSignalHandler creates a new signal handler for managing OS signals.
 func NewSignalHandler() *SignalHandler {
-	return &SignalHandler{}
+	return &SignalHandler{
+		signals: make(chan os.Signal, 1),
+	}
 }
 
-// Setup initializes signal handling for SIGINT and EOF
-func (h *SignalHandler) Setup() error {
-	return nil
+// SetupWithInterrupt initializes signal handling for SIGINT.
+func (h *SignalHandler) SetupWithInterrupt() {
+	signal.Notify(h.signals, os.Interrupt)
 }
 
-// Handle processes incoming signals
-func (h *SignalHandler) Handle() {
+// C returns the signal channel for long-lived listeners.
+func (h *SignalHandler) C() <-chan os.Signal {
+	return h.signals
 }
 
-// Stop halts signal handling and cleans up resources
 func (h *SignalHandler) Stop() {
+	signal.Stop(h.signals)
 }
