@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notify Service</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #1d2430;
+      --muted: #667085;
+      --line: #d8dee8;
+      --primary: #2563eb;
+      --danger: #b42318;
+      --ok: #067647;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 32px auto;
+      display: grid;
+      gap: 18px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    h1 { margin: 0; font-size: 26px; line-height: 1.15; }
+    h2 { margin: 0 0 14px; font-size: 17px; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 11px;
+      color: var(--text);
+      background: #fff;
+      font: inherit;
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    button {
+      border: 0;
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 13px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary { background: #344054; }
+    button.danger { background: var(--danger); }
+    button:disabled { opacity: .55; cursor: default; }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .row input { flex: 1; }
+    .status {
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: #f9fafb;
+      padding: 12px;
+      min-height: 48px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .ok { color: var(--ok); }
+    .error { color: var(--danger); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+    code {
+      background: #eef2f7;
+      border-radius: 4px;
+      padding: 2px 4px;
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 780px) {
+      main { width: min(100vw - 20px, 1120px); margin: 18px auto; }
+      header, .grid, .row { display: grid; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Notify Service</h1>
+      </div>
+      <div id="health" class="status">API ready</div>
+    </header>
+
+    <div class="grid">
+      <section>
+        <h2>Create Notification</h2>
+        <form id="create-form">
+          <label>Recipient
+            <input name="recipient" autocomplete="off" required value="user-1">
+          </label>
+          <label>Message
+            <textarea name="message" required>Hello from notify-service</textarea>
+          </label>
+          <label>Send at
+            <input name="send_at" type="datetime-local" required>
+          </label>
+          <button type="submit">Create</button>
+        </form>
+      </section>
+
+      <section>
+        <h2>Status Lookup</h2>
+        <div class="row">
+          <input id="lookup-id" placeholder="notification id">
+          <button id="lookup-btn" class="secondary" type="button">Get</button>
+          <button id="cancel-btn" class="danger" type="button">Cancel</button>
+        </div>
+        <div id="lookup-result" class="status" style="margin-top: 12px;"></div>
+      </section>
+    </div>
+
+    <section>
+      <h2>Recent Notifications</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Status</th>
+            <th>Recipient</th>
+            <th>Send at</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="recent"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const createForm = document.querySelector('#create-form');
+    const lookupId = document.querySelector('#lookup-id');
+    const lookupResult = document.querySelector('#lookup-result');
+    const recent = document.querySelector('#recent');
+    const health = document.querySelector('#health');
+    const recentItems = [];
+
+    const defaultDate = new Date(Date.now() + 60_000);
+    defaultDate.setSeconds(0, 0);
+    createForm.elements.send_at.value = toLocalInput(defaultDate);
+
+    createForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const data = new FormData(createForm);
+      const payload = {
+        recipient: data.get('recipient'),
+        message: data.get('message'),
+        send_at: new Date(data.get('send_at')).toISOString()
+      };
+
+      const result = await request('/notify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if (!result.ok) return show(health, result.error, false);
+
+      recentItems.unshift(result.data.result);
+      recentItems.splice(8);
+      lookupId.value = result.data.result.id;
+      show(health, 'Created ' + result.data.result.id, true);
+      renderRecent();
+    });
+
+    document.querySelector('#lookup-btn').addEventListener('click', async () => {
+      const id = lookupId.value.trim();
+      if (!id) return show(lookupResult, 'id is required', false);
+      const result = await request('/notify/' + encodeURIComponent(id));
+      if (!result.ok) return show(lookupResult, result.error, false);
+      show(lookupResult, JSON.stringify(result.data.result, null, 2), true);
+    });
+
+    document.querySelector('#cancel-btn').addEventListener('click', async () => {
+      const id = lookupId.value.trim();
+      if (!id) return show(lookupResult, 'id is required', false);
+      const result = await request('/notify/' + encodeURIComponent(id), {method: 'DELETE'});
+      if (!result.ok) return show(lookupResult, result.error, false);
+      show(lookupResult, JSON.stringify(result.data.result, null, 2), true);
+      const item = recentItems.find((n) => n.id === id);
+      if (item) item.status = result.data.result.status;
+      renderRecent();
+    });
+
+    async function request(url, options) {
+      try {
+        const response = await fetch(url, options);
+        const data = await response.json();
+        if (!response.ok) return {ok: false, error: data.error || response.statusText};
+        return {ok: true, data};
+      } catch (error) {
+        return {ok: false, error: error.message};
+      }
+    }
+
+    function renderRecent() {
+      recent.innerHTML = recentItems.map((n) => `
+        <tr>
+          <td><code>${escapeHtml(n.id)}</code></td>
+          <td>${escapeHtml(n.status)}</td>
+          <td>${escapeHtml(n.recipient || '')}</td>
+          <td>${escapeHtml(n.send_at || '')}</td>
+          <td><button class="secondary" type="button" data-id="${escapeHtml(n.id)}">Use</button></td>
+        </tr>
+      `).join('');
+      recent.querySelectorAll('button[data-id]').forEach((button) => {
+        button.addEventListener('click', () => lookupId.value = button.dataset.id);
+      });
+    }
+
+    function show(node, text, ok) {
+      node.textContent = text;
+      node.classList.toggle('ok', ok);
+      node.classList.toggle('error', !ok);
+    }
+
+    function toLocalInput(date) {
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+  </script>
+</body>
+</html>

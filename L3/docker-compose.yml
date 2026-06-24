@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: notify
+      POSTGRES_PASSWORD: notify
+      POSTGRES_DB: notify
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notify -d notify"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  notify-service:
+    build:
+      context: .
+    environment:
+      APP_ENV: local
+      NOTIFY_ADDR: ":8080"
+      POSTGRES_DSN: "postgres://notify:notify@postgres:5432/notify?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      REDIS_DB: "0"
+      CACHE_TTL: "5m"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      RABBITMQ_EXCHANGE: "notifications"
+      RABBITMQ_EXCHANGE_KIND: "direct"
+      RABBITMQ_QUEUE: "notifications.send"
+      RABBITMQ_ROUTING_KEY: "notifications.send"
+      WORKER_INTERVAL: "10s"
+      WORKER_LIMIT: "100"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

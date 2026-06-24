@@ -1,0 +1,7 @@
+.git
+.DS_Store
+Dockerfile
+docker-compose.yml
+bin/
+tmp/
+*.test

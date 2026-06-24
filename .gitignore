@@ -1,3 +1,24 @@
 .DS_Store
 .idea/
 sandboxing/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Go build/test artifacts
+bin/
+tmp/
+*.test
+*.out
+coverage.out
+
+# Logs
+*.log
+
+# Codex learning session notes
+learning-checklist.md
+
+# Docker local overrides
+docker-compose.override.yml
